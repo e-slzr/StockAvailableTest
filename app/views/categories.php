@@ -1,8 +1,3 @@
-<?php
-$pageTitle = 'Categories Management';
-require_once 'layout.php';
-?>
-
 <div class="d-flex justify-content-between align-items-center mb-4">
     <h2>Categories</h2>
     <button type="button" class="btn btn-primary" id="addCategoryBtn" title="New Category">
@@ -50,13 +45,13 @@ require_once 'layout.php';
                     
                     <div class="mb-3">
                         <label for="categoryCode" class="form-label">Code</label>
-                        <input type="text" class="form-control" id="categoryCode" placeholder="Enter category code">
+                        <input type="text" class="form-control" id="categoryCode" placeholder="Enter category code" required>
                         <div class="invalid-feedback" id="codeError"></div>
                     </div>
                     
                     <div class="mb-3">
                         <label for="categoryName" class="form-label">Name</label>
-                        <input type="text" class="form-control" id="categoryName" placeholder="Enter category name">
+                        <input type="text" class="form-control" id="categoryName" placeholder="Enter category name" required>
                         <div class="invalid-feedback" id="nameError"></div>
                     </div>
                     
@@ -94,4 +89,3 @@ require_once 'layout.php';
     </div>
 </div>
 
-<script src="public/js/custom/categories.js"></script>

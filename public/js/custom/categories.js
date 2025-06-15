@@ -1,8 +1,19 @@
 // Variables para controlar el estado
-var isSaving = false;
-var isEditing = false;
+let isSaving = false;
+let isEditing = false;
+
+console.log('Categories script loading...');
+
+// Verificar que las funciones globales estén disponibles
+console.log('API Functions available:', {
+    getApiData: typeof getApiData,
+    postApiData: typeof postApiData,
+    updateApiData: typeof updateApiData,
+    deleteApiData: typeof deleteApiData
+});
 
 document.addEventListener('DOMContentLoaded', async function() {
+    console.log('DOM Content Loaded - Categories');
     try {
         // Cargar categorías al inicio
         await loadCategories();
@@ -15,7 +26,7 @@ document.addEventListener('DOMContentLoaded', async function() {
             isEditing = false;
         });
 
-        // Configurar evento para nuevo categoría
+        // Configurar evento para nueva categoría
         document.getElementById('addCategoryBtn').addEventListener('click', function() {
             // Resetear el formulario para nueva categoría
             document.getElementById('categoryForm').reset();
@@ -30,105 +41,19 @@ document.addEventListener('DOMContentLoaded', async function() {
         });
 
         // Configurar evento para guardar
-        document.getElementById('saveCategoryBtn').addEventListener('click', function(e) {
-            const button = this;
-            if (button.disabled) return;
-            
-            // Deshabilitar el botón y mostrar estado de carga
-            button.disabled = true;
-            button.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Saving...';
-            
-            saveCategory(button);
-        });
+        const saveCategoryBtn = document.getElementById('saveCategoryBtn');
+        console.log('Save button element:', saveCategoryBtn);
+        if (saveCategoryBtn) {
+            saveCategoryBtn.addEventListener('click', saveCategory);
+            console.log('Save button click event attached');
+        } else {
+            console.error('Save button element not found');
+        }
     } catch (error) {
         console.error('Error during initialization:', error);
-        showErrorMessage('Error initializing application. Please refresh the page.');
+        showMessage('Error', 'Error initializing application. Please refresh the page.', 'danger');
     }
 });
-
-// Función para mostrar mensaje de éxito
-function showSuccessMessage(message) {
-    const modalHtml = `
-        <div class="modal fade" id="successModal" tabindex="-1" aria-hidden="true">
-            <div class="modal-dialog">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h5 class="modal-title">Success</h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                    </div>
-                    <div class="modal-body">
-                        <div class="alert alert-success mb-0">
-                            ${message}
-                        </div>
-                    </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                    </div>
-                </div>
-            </div>
-        </div>
-    `;
-    
-    // Remover modal anterior si existe
-    const existingModal = document.getElementById('successModal');
-    if (existingModal) {
-        existingModal.remove();
-    }
-    
-    // Agregar nuevo modal
-    document.body.insertAdjacentHTML('beforeend', modalHtml);
-    
-    // Mostrar modal
-    const successModal = new bootstrap.Modal(document.getElementById('successModal'));
-    successModal.show();
-    
-    // Remover modal del DOM cuando se cierre
-    document.getElementById('successModal').addEventListener('hidden.bs.modal', function() {
-        this.remove();
-    });
-}
-
-// Función para mostrar mensaje de error
-function showErrorMessage(message) {
-    const modalHtml = `
-        <div class="modal fade" id="errorModal" tabindex="-1" aria-hidden="true">
-            <div class="modal-dialog">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h5 class="modal-title">Error</h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                    </div>
-                    <div class="modal-body">
-                        <div class="alert alert-danger mb-0">
-                            ${message}
-                        </div>
-                    </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                    </div>
-                </div>
-            </div>
-        </div>
-    `;
-    
-    // Remover modal anterior si existe
-    const existingModal = document.getElementById('errorModal');
-    if (existingModal) {
-        existingModal.remove();
-    }
-    
-    // Agregar nuevo modal
-    document.body.insertAdjacentHTML('beforeend', modalHtml);
-    
-    // Mostrar modal
-    const errorModal = new bootstrap.Modal(document.getElementById('errorModal'));
-    errorModal.show();
-    
-    // Remover modal del DOM cuando se cierre
-    document.getElementById('errorModal').addEventListener('hidden.bs.modal', function() {
-        this.remove();
-    });
-}
 
 async function loadCategories() {
     try {
@@ -197,26 +122,28 @@ function updateCategoriesTable(categories) {
     });
 }
 
-async function saveCategory(button) {
+async function saveCategory(e) {
     try {
+        if (e) {
+            e.preventDefault();
+        }
+
         // Validar el formulario
         const form = document.getElementById('categoryForm');
         if (!form.checkValidity()) {
             form.classList.add('was-validated');
-            // Restablecer el botón si el formulario no es válido
-            if (button) {
-                button.disabled = false;
-                button.innerHTML = 'Save';
-            }
             return;
         }
 
         if (isSaving) return;
         isSaving = true;
 
+        const button = document.getElementById('saveCategoryBtn');
+        button.disabled = true;
+        button.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Saving...';
+
         const categoryId = document.getElementById('categoryId').value;
         const categoryData = {
-            id: categoryId ? parseInt(categoryId) : 0,
             code: document.getElementById('categoryCode').value,
             name: document.getElementById('categoryName').value,
             description: document.getElementById('categoryDescription').value || ''
@@ -224,43 +151,36 @@ async function saveCategory(button) {
 
         let response;
         if (categoryId) {
-            // Update existing category with the complete URL
             response = await updateApiData(`Categories/${categoryId}`, null, categoryData);
         } else {
-            // Create new category
             response = await postApiData('Categories', categoryData);
         }
 
         if (response) {
             // Cerrar el modal
-            const modalElement = document.getElementById('categoryModal');
-            const modalInstance = bootstrap.Modal.getOrCreateInstance(modalElement);
+            const modalInstance = bootstrap.Modal.getOrCreateInstance(document.getElementById('categoryModal'));
             modalInstance.hide();
 
             // Mostrar mensaje de éxito
-            showSuccessMessage(`Category ${categoryId ? 'updated' : 'created'} successfully`);
+            showMessage('Success', `Category ${categoryId ? 'updated' : 'created'} successfully`, 'success');
 
             // Recargar la tabla
             await loadCategories();
         }
     } catch (error) {
         console.error('Error saving category:', error);
-        showErrorMessage('Error saving category. Please try again.');
+        showMessage('Error', 'Error saving category. Please try again.', 'danger');
     } finally {
         isSaving = false;
-        if (button) {
-            button.disabled = false;
-            button.innerHTML = 'Save';
-        }
+        const button = document.getElementById('saveCategoryBtn');
+        button.disabled = false;
+        button.innerHTML = 'Save';
     }
 }
 
 async function editCategory(id) {
     try {
-        // Marcar que estamos en modo edición
         isEditing = true;
-        
-        // Obtener datos de la categoría
         const category = await getApiData(`Categories/${id}`);
         
         if (category) {
@@ -282,26 +202,23 @@ async function editCategory(id) {
         }
     } catch (error) {
         console.error('Error loading category:', error);
-        showErrorMessage('Error loading category. Please try again.');
+        showMessage('Error', 'Error loading category. Please try again.', 'danger');
     }
 }
 
-async function toggleCategoryStatus(id, currentStatus) {
+async function toggleCategoryStatus(id, isActive) {
     try {
-        const message = `Are you sure you want to ${currentStatus ? 'deactivate' : 'activate'} this category?`;
+        const message = `Are you sure you want to ${isActive ? 'deactivate' : 'activate'} this category?`;
         
-        // Create modal element
-        const modalElement = document.createElement('div');
-        modalElement.className = 'modal fade';
-        modalElement.innerHTML = `
+        const modalHTML = `
             <div class="modal-dialog">
                 <div class="modal-content">
                     <div class="modal-header">
                         <h5 class="modal-title">Confirm Action</h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                     </div>
                     <div class="modal-body">
-                        <p>${message}</p>
+                        ${message}
                     </div>
                     <div class="modal-footer">
                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
@@ -310,163 +227,93 @@ async function toggleCategoryStatus(id, currentStatus) {
                 </div>
             </div>
         `;
-        document.body.appendChild(modalElement);
+
+        const confirmed = await showConfirmDialog(modalHTML);
         
-        // Create and show modal
-        const confirmModal = new bootstrap.Modal(modalElement);
-        
-        const result = await new Promise(resolve => {
-            modalElement.querySelector('.confirm-action').onclick = () => {
-                confirmModal.hide();
-                resolve(true);
-            };
-            modalElement.addEventListener('hidden.bs.modal', () => {
-                resolve(false);
-                modalElement.remove();
-            });
-            confirmModal.show();
-        });
-        
-        if (result) {
-            // Primero obtenemos los datos actuales de la categoría
-            const currentCategory = await getApiData(`Categories/${id}`);
-            if (currentCategory) {
-                // Actualizamos solo el estado manteniendo el resto de datos
-                const updatedCategory = {
-                    ...currentCategory,
-                    isActive: !currentStatus
-                };
+        if (confirmed) {
+            const category = await getApiData(`Categories/${id}`);
+            if (category) {
+                category.isActive = !isActive;
+                const response = await updateApiData(`Categories/${id}`, null, category);
                 
-                const response = await updateApiData(`Categories/${id}`, id, updatedCategory);
                 if (response) {
-                    const messageModalEl = document.getElementById('messageModal');
-                    const messageModal = new bootstrap.Modal(messageModalEl);
-                    document.getElementById('messageModalLabel').textContent = 'Success';
-                    const messageBody = document.getElementById('messageModalBody');
-                    messageBody.className = 'alert alert-success';
-                    messageBody.textContent = `Category ${currentStatus ? 'deactivated' : 'activated'} successfully`;
-                    messageModal.show();
+                    showMessage('Success', `Category ${isActive ? 'deactivated' : 'activated'} successfully`, 'success');
                     await loadCategories();
                 }
             }
         }
     } catch (error) {
         console.error('Error toggling category status:', error);
-        const messageModalEl = document.getElementById('messageModal');
-        const messageModal = new bootstrap.Modal(messageModalEl);
-        document.getElementById('messageModalLabel').textContent = 'Error';
-        const messageBody = document.getElementById('messageModalBody');
-        messageBody.className = 'alert alert-danger';
-        messageBody.textContent = 'Error updating category status. Please try again.';
-        messageModal.show();
+        showMessage('Error', 'Error updating category status. Please try again.', 'danger');
     }
 }
 
 async function deleteCategory(id, code) {
     try {
-        const message = `Are you sure you want to delete the category "${code}"?`;
-        
-        // Create confirm modal element
-        const modalElement = document.createElement('div');
-        modalElement.className = 'modal fade';
-        modalElement.innerHTML = `
+        const modalHTML = `
             <div class="modal-dialog">
                 <div class="modal-content">
                     <div class="modal-header">
                         <h5 class="modal-title">Confirm Delete</h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                     </div>
                     <div class="modal-body">
-                        <p>${message}</p>
+                        Are you sure you want to delete category "${code}"?
                     </div>
                     <div class="modal-footer">
                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                        <button type="button" class="btn btn-danger confirm-delete">Delete</button>
+                        <button type="button" class="btn btn-danger confirm-action">Delete</button>
                     </div>
                 </div>
             </div>
         `;
-        document.body.appendChild(modalElement);
+
+        const confirmed = await showConfirmDialog(modalHTML);
         
-        // Create and show confirm modal
-        const confirmModal = new bootstrap.Modal(modalElement);
-        
-        const result = await new Promise(resolve => {
-            modalElement.querySelector('.confirm-delete').onclick = () => {
-                confirmModal.hide();
-                resolve(true);
-            };
-            modalElement.addEventListener('hidden.bs.modal', () => {
-                resolve(false);
-                modalElement.remove();
-            });
-            confirmModal.show();
-        });
-        
-        if (result) {
+        if (confirmed) {
             const response = await deleteApiData(`Categories/${id}`);
             if (response) {
-                // Create success modal element
-                const successModalElement = document.createElement('div');
-                successModalElement.className = 'modal fade';
-                successModalElement.innerHTML = `
-                    <div class="modal-dialog">
-                        <div class="modal-content">
-                            <div class="modal-header">
-                                <h5 class="modal-title">Success</h5>
-                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                            </div>
-                            <div class="modal-body">
-                                Category deleted successfully
-                            </div>
-                            <div class="modal-footer">
-                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                            </div>
-                        </div>
-                    </div>
-                `;
-                document.body.appendChild(successModalElement);
-                
-                // Show success modal and handle cleanup
-                const successModal = new bootstrap.Modal(successModalElement);
-                successModalElement.addEventListener('hidden.bs.modal', () => {
-                    successModalElement.remove();
-                });
-                successModal.show();
-                
-                // Reload categories
+                showMessage('Success', 'Category deleted successfully', 'success');
                 await loadCategories();
             }
         }
     } catch (error) {
         console.error('Error deleting category:', error);
-        
-        // Create error modal element
-        const errorModalElement = document.createElement('div');
-        errorModalElement.className = 'modal fade';
-        errorModalElement.innerHTML = `
-            <div class="modal-dialog">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h5 class="modal-title">Error</h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                    </div>
-                    <div class="modal-body">
-                        Error deleting category. Please try again.
-                    </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                    </div>
-                </div>
-            </div>
-        `;
-        document.body.appendChild(errorModalElement);
-        
-        // Show error modal and handle cleanup
-        const errorModal = new bootstrap.Modal(errorModalElement);
-        errorModalElement.addEventListener('hidden.bs.modal', () => {
-            errorModalElement.remove();
-        });
-        errorModal.show();
+        showMessage('Error', 'Error deleting category. Please try again.', 'danger');
     }
+}
+
+function showMessage(title, message, type = 'success') {
+    const modalElement = document.getElementById('messageModal');
+    const modal = bootstrap.Modal.getOrCreateInstance(modalElement);
+    
+    document.getElementById('messageModalLabel').textContent = title;
+    const messageBody = document.getElementById('messageModalBody');
+    messageBody.className = `alert alert-${type} mb-0`;
+    messageBody.textContent = message;
+    
+    modal.show();
+}
+
+async function showConfirmDialog(modalHTML) {
+    return new Promise(resolve => {
+        const modalElement = document.createElement('div');
+        modalElement.className = 'modal fade';
+        modalElement.innerHTML = modalHTML;
+        document.body.appendChild(modalElement);
+        
+        const modal = new bootstrap.Modal(modalElement);
+        
+        modalElement.querySelector('.confirm-action').onclick = () => {
+            modal.hide();
+            resolve(true);
+        };
+        
+        modalElement.addEventListener('hidden.bs.modal', () => {
+            resolve(false);
+            modalElement.remove();
+        });
+        
+        modal.show();
+    });
 }
