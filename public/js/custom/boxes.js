@@ -327,13 +327,17 @@ async function deleteBox(id, code) {
     document.getElementById('confirmDeleteBtn').addEventListener('click', async function() {
         try {
             modal.hide();
-            
-            const response = await fetch(`${API_URL}Boxes/${id}`, {
+              const response = await fetch(`${API_URL}Boxes/${id}`, {
                 method: 'DELETE'
             });
 
             if (!response.ok) {
-                throw new Error('Network response was not ok');
+                const errorData = await response.text();
+                if (response.status === 400) {
+                    throw new Error('This box cannot be deleted because it is currently in use.');
+                } else {
+                    throw new Error(errorData || 'Error deleting box');
+                }
             }
 
             await loadBoxes();
@@ -345,7 +349,7 @@ async function deleteBox(id, code) {
             });
         } catch (error) {
             console.error('Error deleting box:', error);
-            showMessage('Error', 'Error deleting box. Please try again.', 'danger');
+            showMessage('Error', error.message, 'danger');
         }
     });
     

@@ -23,11 +23,11 @@ $products = getApiData('products');
                     <tr>
                         <th>Code</th>
                         <th>Description</th>
-                        <th>Minimum Stock</th>
                         <th>Unit</th>
                         <th>Category</th>
                         <th>Status</th>
                         <th>Last Transaction</th>
+                        <th>Minimum Stock</th>
                         <th>Available Stock</th>
                         <th>Actions</th>
                     </tr>
@@ -38,6 +38,14 @@ $products = getApiData('products');
                             <tr>
                                 <td><?= htmlspecialchars($product['code']) ?></td>
                                 <td><?= htmlspecialchars($product['description']) ?></td>
+                                <td><?= htmlspecialchars($product['unit']) ?></td>
+                                <td><?= htmlspecialchars($product['categoryName']) ?></td>
+                                <td>
+                                    <span class="badge <?= $product['isActive'] ? 'bg-success' : 'bg-danger' ?>">
+                                        <?= $product['isActive'] ? 'Active' : 'Inactive' ?>
+                                    </span>
+                                </td>
+                                <td><?= $product['lastTransactionDate'] ? date('Y-m-d H:i', strtotime($product['lastTransactionDate'])) : 'N/A' ?></td>
                                 <td>
                                     <?php if ($product['availableStock'] < $product['minimumStock']): ?>
                                         <span class="text-danger" title="Stock below minimum level">
@@ -48,14 +56,6 @@ $products = getApiData('products');
                                         <?= htmlspecialchars($product['minimumStock']) ?>
                                     <?php endif; ?>
                                 </td>
-                                <td><?= htmlspecialchars($product['unit']) ?></td>
-                                <td><?= htmlspecialchars($product['categoryName']) ?></td>
-                                <td>
-                                    <span class="badge <?= $product['isActive'] ? 'bg-success' : 'bg-danger' ?>">
-                                        <?= $product['isActive'] ? 'Active' : 'Inactive' ?>
-                                    </span>
-                                </td>
-                                <td><?= $product['lastTransactionDate'] ? date('Y-m-d H:i', strtotime($product['lastTransactionDate'])) : 'N/A' ?></td>
                                 <td>
                                     <?php if ($product['availableStock'] < $product['minimumStock']): ?>
                                         <span class="text-danger fw-bold"><?= htmlspecialchars($product['availableStock']) ?></span>

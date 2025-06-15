@@ -21,7 +21,7 @@ require_once 'layout.php';
                             <th>ID</th>
                             <th>Code</th>
                             <th>Location</th>
-                            <th>Total Capacity</th>
+                            <th>Max. Capacity</th>
                             <th>Last Transaction</th>
                             <th>Actions</th>
                         </tr>
