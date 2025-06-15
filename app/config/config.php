@@ -1,9 +1,9 @@
 <?php
 // Database configuration
-define('API_URL', 'http://localhost:5012/api/');
+define('API_URL', 'https://stockavaibletest-api.onrender.com/api/');
 
 // Application configuration
-define('BASE_URL', 'http://localhost:8080/StockAvaibleTest');
+define('BASE_URL', 'http://eliuasalazar-001-site1.anytempurl.com');
 define('DEFAULT_CONTROLLER', 'transactions');
 define('DEFAULT_ACTION', 'index');
 
