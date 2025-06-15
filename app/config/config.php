@@ -1,0 +1,13 @@
+<?php
+// Database configuration
+define('API_URL', 'http://localhost:5012/api/');
+
+// Application configuration
+define('BASE_URL', 'http://localhost:8080/StockAvaibleTest');
+define('DEFAULT_CONTROLLER', 'transactions');
+define('DEFAULT_ACTION', 'index');
+
+// Error reporting
+error_reporting(E_ALL);
+ini_set('display_errors', 1);
+?>

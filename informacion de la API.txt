@@ -1,0 +1,207 @@
+# Stock Available Test API
+
+API REST desarrollada en C# (.NET 8) para la gestión de inventario de Tegra. Permite administrar productos, cajas, categorías y transacciones entre cajas/productos.
+
+## Características
+
+- ✅ API REST en C# (.NET 8)
+- ✅ Conexión con MS SQL Server
+- ✅ Documentación con Swagger
+- ✅ Patrón Repository y Unit of Work
+- ✅ DTOs y AutoMapper
+- ✅ Validaciones con FluentValidation
+- ✅ Manejo de errores y excepciones
+- ✅ Lista para ser consumida por frontend PHP
+
+## Requisitos Previos
+
+- .NET 8.0 SDK
+- SQL Server
+- Visual Studio 2022 o posterior (recomendado)
+
+## Instalación
+
+1. Clonar el repositorio
+```bash
+git clone [https://github.com/e-slzr/StockAvaibleTest-API.git]
+```
+
+2. Actualizar la cadena de conexión en `appsettings.json`
+```json
+"ConnectionStrings": {
+    "DefaultConnection": "Server=your_server;Database=your_database;Trusted_Connection=True;MultipleActiveResultSets=true;TrustServerCertificate=true"
+}
+```
+
+3. Ejecutar las migraciones
+```bash
+dotnet ef database update
+```
+
+4. Ejecutar el proyecto
+```bash
+dotnet run
+```
+
+## Documentación de la API
+
+### 1. Estructura Base
+```
+BASE URL: /api
+Swagger UI: /swagger
+```
+
+### 2. Endpoints Principales
+
+#### Categorías
+```
+GET    /api/categories          - Obtener todas las categorías
+GET    /api/categories/{id}     - Obtener categoría por ID
+POST   /api/categories          - Crear nueva categoría
+PUT    /api/categories/{id}     - Actualizar categoría
+DELETE /api/categories/{id}     - Eliminar categoría
+```
+Ejemplo CreateCategoryDTO:
+```json
+{
+    "name": "Laptops",
+    "description": "Portable computers"
+}
+```
+
+#### Productos
+```
+GET    /api/products           - Obtener todos los productos
+GET    /api/products/{id}      - Obtener producto por ID
+POST   /api/products           - Crear nuevo producto
+PUT    /api/products/{id}      - Actualizar producto
+DELETE /api/products/{id}      - Eliminar producto
+```
+Ejemplo CreateProductDTO:
+```json
+{
+    "code": "LAP001",
+    "description": "Laptop HP 15 pulgadas",
+    "categoryId": 1,
+    "isActive": true
+}
+```
+
+#### Cajas (Boxes)
+```
+GET    /api/boxes              - Obtener todas las cajas
+GET    /api/boxes/{id}         - Obtener caja por ID
+POST   /api/boxes              - Crear nueva caja
+PUT    /api/boxes/{id}         - Actualizar caja
+DELETE /api/boxes/{id}         - Eliminar caja
+```
+Ejemplo CreateBoxDTO:
+```json
+{
+    "code": "BOX001",
+    "description": "Storage Box A1"
+}
+```
+
+#### Transacciones
+```
+GET    /api/transactions           - Obtener todas las transacciones
+GET    /api/transactions/{id}      - Obtener transacción por ID
+POST   /api/transactions          - Crear nueva transacción
+```
+Ejemplo CreateTransactionDTO:
+```json
+{
+    "boxId": 1,
+    "productId": 1,
+    "quantity": 10,
+    "type": "IN"  // Puede ser "IN" o "OUT"
+}
+```
+Ejemplo respuesta TransactionDTO:
+```json
+{
+    "id": 1,
+    "boxId": 1,
+    "boxCode": "BOX001",
+    "productId": 1,
+    "productCode": "LAP001",
+    "productDescription": "Laptop HP 15 pulgadas",
+    "quantity": 10,
+    "type": "IN",
+    "transactionDate": "2025-06-14T21:41:53.9427425Z"
+}
+```
+
+### 3. Reglas de Negocio Importantes
+
+1. **Productos**:
+   - Código debe ser único
+   - Debe pertenecer a una categoría válida
+   - Puede marcarse como activo/inactivo
+
+2. **Cajas**:
+   - Código debe ser único
+   - Se actualiza lastOperationDate con cada transacción
+
+3. **Transacciones**:
+   - Tipos válidos: "IN" (entrada) y "OUT" (salida)
+   - Para transacciones OUT, se valida stock suficiente
+   - No se pueden hacer transacciones con productos inactivos
+   - Actualiza lastTransactionDate del producto
+   - Actualiza lastOperationDate de la caja
+
+### 4. Formato de Respuestas
+
+Todas las respuestas siguen este formato:
+```json
+{
+    "succeeded": true/false,
+    "data": { /* datos solicitados */ },
+    "error": "mensaje de error si succeeded es false"
+}
+```
+
+### 5. Códigos de Estado HTTP
+- 200: OK (GET, PUT exitoso)
+- 201: Created (POST exitoso)
+- 204: No Content (DELETE exitoso)
+- 400: Bad Request (error de validación)
+- 404: Not Found (recurso no encontrado)
+- 500: Internal Server Error
+
+### 6. Validaciones Comunes
+- Campos requeridos no pueden ser null o vacíos
+- Códigos (code) deben ser únicos
+- IDs deben existir en la base de datos
+- Cantidades deben ser mayores a 0
+- Stock suficiente para transacciones OUT
+
+### 7. Headers Necesarios
+```
+Content-Type: application/json
+Accept: application/json
+```
+
+### 8. Base de Datos
+- SQL Server
+- Las tablas están en inglés
+- Relaciones:
+  - Category -> Products (1:N)
+  - Box -> BoxProductTransactions (1:N)
+  - Product -> BoxProductTransactions (1:N)
+
+## Estructura del Proyecto
+
+```
+StockAvaibleTest-API/
+├── Controllers/            # Controladores REST
+├── Services/               # Lógica de negocio
+├── Repositories/           # Acceso a datos
+├── Models/                 # Entidades de dominio
+├── DTOs/                   # Objetos de transferencia
+├── Interfaces/             # Interfaces
+├── Common/                 # Utilidades compartidas
+├── Validators/             # Validaciones FluentValidation
+└── Data/                   # Contexto y configuración EF Core
+```
