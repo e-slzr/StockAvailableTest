@@ -15,8 +15,7 @@
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
                 <span class="navbar-toggler-icon"></span>
             </button>
-            <div class="collapse navbar-collapse" id="navbarNav">
-                <ul class="navbar-nav">
+            <div class="collapse navbar-collapse" id="navbarNav">                <ul class="navbar-nav">
                     <li class="nav-item">
                         <a class="nav-link" href="?view=transactions">Transactions</a>
                     </li>
@@ -25,6 +24,9 @@
                     </li>
                     <li class="nav-item">
                         <a class="nav-link" href="?view=boxes">Boxes</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="?view=categories">Categories</a>
                     </li>
                 </ul>
             </div>
@@ -42,7 +44,8 @@
         const API_URL = '<?php echo API_URL; ?>';
         const BASE_URL = '<?php echo BASE_URL; ?>';
     </script>
-    <!-- Scripts personalizados después de las dependencias -->
+    <!-- Helpers -->
+    <script src="public/js/custom/api_helper.js"></script>
     <script src="public/js/custom/main.js"></script>
     <?php if (isset($view)): ?>
     <script src="public/js/custom/<?php echo $view; ?>.js"></script>
