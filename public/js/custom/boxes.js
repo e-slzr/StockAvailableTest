@@ -1,24 +1,28 @@
-document.addEventListener('DOMContentLoaded', function() {
-    // Load boxes data when the page loads
-    loadBoxes();
+document.addEventListener('DOMContentLoaded', async function() {
+    try {
+        // Load boxes data when the page loads
+        await loadBoxes();
 
-    // Initialize modal events
-    document.getElementById('addBoxBtn').addEventListener('click', function() {
-        document.getElementById('boxId').value = '';
-        document.getElementById('boxForm').reset();
-        document.getElementById('boxModalLabel').textContent = 'Add New Box';
-        new bootstrap.Modal(document.getElementById('boxModal')).show();
-    });
+        // Initialize modal events
+        document.getElementById('addBoxBtn').addEventListener('click', function() {
+            document.getElementById('boxId').value = '';
+            document.getElementById('boxForm').reset();
+            document.getElementById('boxModalLabel').textContent = 'Add New Box';
+            new bootstrap.Modal(document.getElementById('boxModal')).show();
+        });
 
-    // Handle save button click
-    document.getElementById('saveBoxBtn').addEventListener('click', function() {
-        saveBox();
-    });
+        // Handle save button click
+        document.getElementById('saveBoxBtn').addEventListener('click', function() {
+            saveBox();
+        });
+    } catch (error) {
+        console.error('Error during initialization:', error);
+    }
 });
 
 async function loadBoxes() {
     try {
-        const data = await getApiData('Box');
+        const data = await getApiData('Boxes');
         if (data) {
             updateBoxesTable(data);
         }
@@ -31,23 +35,19 @@ async function loadBoxes() {
 function updateBoxesTable(boxes) {
     const tbody = document.querySelector('#boxesTable tbody');
     tbody.innerHTML = '';
-
+    
     boxes.forEach(box => {
         const row = document.createElement('tr');
-        row.innerHTML = `
+        const date = new Date(box.lastOperationDate);
+        const formattedDate = date.toLocaleDateString() + ' ' + date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+          row.innerHTML = `
             <td>${box.id}</td>
-            <td>${box.name}</td>
-            <td>${box.description || ''}</td>
-            <td>${box.isActive ? 'Active' : 'Inactive'}</td>
+            <td>${box.code}</td>
+            <td>${box.location}</td>
+            <td>${formattedDate}</td>
             <td>
-                <button class="btn btn-sm btn-primary me-2" onclick="editBox(${box.id})">
-                    <i class="fas fa-edit"></i> Edit
-                </button>
-                <button class="btn btn-sm ${box.isActive ? 'btn-danger' : 'btn-success'}" 
-                        onclick="toggleBoxStatus(${box.id}, ${box.isActive})">
-                    <i class="fas fa-${box.isActive ? 'times' : 'check'}"></i> 
-                    ${box.isActive ? 'Deactivate' : 'Activate'}
-                </button>
+                <button class="btn btn-sm btn-primary" onclick="editBox(${box.id})">Edit</button>
+                <button class="btn btn-sm btn-danger" onclick="deleteBox(${box.id}, '${box.code}')">Delete</button>
             </td>
         `;
         tbody.appendChild(row);
@@ -56,11 +56,11 @@ function updateBoxesTable(boxes) {
 
 async function editBox(id) {
     try {
-        const box = await getApiData(`Box/${id}`);
+        const box = await getApiData(`Boxes/${id}`);
         if (box) {
             document.getElementById('boxId').value = box.id;
-            document.getElementById('boxName').value = box.name;
-            document.getElementById('boxDescription').value = box.description || '';
+            document.getElementById('boxCode').value = box.code;
+            document.getElementById('boxLocation').value = box.location;
             document.getElementById('boxModalLabel').textContent = 'Edit Box';
             new bootstrap.Modal(document.getElementById('boxModal')).show();
         }
@@ -73,20 +73,27 @@ async function editBox(id) {
 async function saveBox() {
     try {
         const boxId = document.getElementById('boxId').value;
-        const boxData = {
-            id: boxId ? parseInt(boxId) : 0,
-            name: document.getElementById('boxName').value.trim(),
-            description: document.getElementById('boxDescription').value.trim(),
-            isActive: true
-        };
+        const boxCode = document.getElementById('boxCode').value.trim();
+        const boxLocation = document.getElementById('boxLocation').value.trim();
 
-        if (!boxData.name) {
-            alert('Please enter a box name');
+        if (!boxCode) {
+            alert('Please enter a box code');
             return;
         }
 
-        const method = boxData.id === 0 ? 'POST' : 'PUT';
-        const url = boxData.id === 0 ? 'Box' : `Box/${boxData.id}`;
+        if (!boxLocation) {
+            alert('Please enter a box location');
+            return;
+        }
+
+        const boxData = {
+            id: boxId ? parseInt(boxId) : 0,
+            code: boxCode,
+            location: boxLocation,
+            lastOperationDate: new Date().toISOString()
+        };
+
+        const method = boxData.id === 0 ? 'POST' : 'PUT';        const url = boxData.id === 0 ? 'Boxes' : `Boxes/${boxData.id}`;
 
         const response = await fetch(`${API_URL}${url}`, {
             method: method,
@@ -116,7 +123,7 @@ async function toggleBoxStatus(id, currentStatus) {
             return;
         }
 
-        const response = await fetch(`${API_URL}Box/${id}/toggle`, {
+        const response = await fetch(`${API_URL}Boxes/${id}/toggle`, {
             method: 'PUT',
             headers: {
                 'Content-Type': 'application/json'
@@ -133,5 +140,54 @@ async function toggleBoxStatus(id, currentStatus) {
     } catch (error) {
         console.error('Error updating box status:', error);
         alert('Error updating box status. Please try again.');
+    }
+}
+
+async function deleteBox(id, code) {
+    try {
+        // Show confirmation dialog
+        const result = await Swal.fire({
+            title: 'Delete Box',
+            text: `Are you sure you want to delete box "${code}"?`,
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#d33',
+            cancelButtonColor: '#3085d6',
+            confirmButtonText: 'Yes, delete it!',
+            cancelButtonText: 'Cancel'
+        });
+
+        if (!result.isConfirmed) {
+            return;
+        }
+
+        // Send DELETE request to API
+        const response = await fetch(`${API_URL}Boxes/${id}`, {
+            method: 'DELETE',
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        });
+
+        if (!response.ok) {
+            throw new Error('Network response was not ok');
+        }
+
+        // Refresh the table
+        await loadBoxes();
+        
+        // Show success message
+        await Swal.fire(
+            'Deleted!',
+            'The box has been deleted.',
+            'success'
+        );
+    } catch (error) {
+        console.error('Error deleting box:', error);
+        await Swal.fire(
+            'Error!',
+            'Failed to delete the box. Please try again.',
+            'error'
+        );
     }
 }
