@@ -707,3 +707,78 @@ async function saveTransaction(button) {
         }
     }
 }
+
+// Función para ver las cajas que contienen un producto
+async function viewProductBoxes(productId, productCode) {
+    try {
+        // Obtener la información de ubicaciones del producto
+        const response = await getApiData(`products/${productId}/locations`);
+        
+        if (response.isSuccess && response.data) {
+            // Actualizar el título del modal con el código y descripción del producto
+            document.getElementById('productBoxesModalLabel').textContent = 
+                `Product Location: ${response.data.productCode} - ${response.data.description}`;
+            
+            // Obtener la tabla donde mostraremos los datos
+            const tbody = document.getElementById('productBoxesTableBody');
+            tbody.innerHTML = '';
+            
+            if (response.data.boxes && response.data.boxes.length > 0) {
+                response.data.boxes.forEach(box => {
+                    const row = document.createElement('tr');
+                    // Formatear la fecha a local
+                    const lastTransaction = new Date(box.lastTransactionDate).toLocaleString();
+                    
+                    row.innerHTML = `
+                        <td>${box.boxCode}</td>
+                        <td>${box.location || 'No location specified'}</td>
+                        <td>${box.currentStock}</td>
+                        <td>${lastTransaction}</td>
+                    `;
+                    tbody.appendChild(row);
+                });
+            } else {
+                // Si no hay cajas, mostrar mensaje
+                const row = document.createElement('tr');
+                row.innerHTML = '<td colspan="5" class="text-center">No boxes found containing this product</td>';
+                tbody.appendChild(row);
+            }
+            
+            // Mostrar el modal
+            const modal = new bootstrap.Modal(document.getElementById('productBoxesModal'));
+            modal.show();
+        } else {
+            throw new Error(response.error || 'Failed to load product locations');
+        }
+    } catch (error) {
+        console.error('Error loading product boxes:', error);
+        // Crear y mostrar modal de error
+        const errorModalElement = document.createElement('div');
+        errorModalElement.className = 'modal fade';
+        errorModalElement.innerHTML = `
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Error</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="alert alert-danger mb-0">
+                            Error loading product boxes. Please try again.
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    </div>
+                </div>
+            </div>
+        `;
+        document.body.appendChild(errorModalElement);
+        
+        const errorModal = new bootstrap.Modal(errorModalElement);
+        errorModalElement.addEventListener('hidden.bs.modal', () => {
+            errorModalElement.remove();
+        });
+        errorModal.show();
+    }
+}
