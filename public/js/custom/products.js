@@ -27,7 +27,7 @@ $(document).ready(function() {
     // Manejar el click del botón de nuevo producto
     $('#newProductBtn').on('click', function(e) {
         e.preventDefault();
-        console.log('New Product button clicked');
+
         // Asegurarse de que no estamos en modo edición
         isEditing = false;
         $('#productModal').modal('show');
@@ -96,7 +96,7 @@ $(document).ready(function() {
 // Cargar categorías
 async function loadCategories() {
     try {
-        console.log('Loading categories from:', API_URL);
+
         const response = await fetch(`${API_URL}categories`);
         
         if (!response.ok) {
@@ -104,7 +104,7 @@ async function loadCategories() {
         }
         
         const categories = await response.json();
-        console.log('Categories data:', categories);
+
 
         const $select = $('#categoryId');
         $select.empty().append('<option value="">Select category...</option>');
@@ -248,7 +248,7 @@ async function editProduct(id) {
         // Indicar que estamos en modo edición
         isEditing = true;
         
-        console.log('Fetching product:', `${API_URL}products/${id}`);
+
         const response = await fetch(`${API_URL}products/${id}`);
         
         if (!response.ok) {
@@ -256,7 +256,7 @@ async function editProduct(id) {
         }
         
         const product = await response.json();
-        console.log('Product data:', product);
+
 
         if (!product) {
             throw new Error('Product data is empty');
