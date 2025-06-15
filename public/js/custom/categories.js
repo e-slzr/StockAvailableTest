@@ -1,39 +1,44 @@
 // Variables para controlar el estado
 let isSaving = false;
 let isEditing = false;
-
-console.log('Categories script loading...');
-
-// Verificar que las funciones globales estén disponibles
-console.log('API Functions available:', {
-    getApiData: typeof getApiData,
-    postApiData: typeof postApiData,
-    updateApiData: typeof updateApiData,
-    deleteApiData: typeof deleteApiData
-});
+let currentCategory = null; // Variable para mantener los datos actuales de la categoría
 
 document.addEventListener('DOMContentLoaded', async function() {
-    console.log('DOM Content Loaded - Categories');
     try {
         // Cargar categorías al inicio
         await loadCategories();
 
         // Inicializar eventos del modal
         const categoryModal = document.getElementById('categoryModal');
-        
+        if (!categoryModal) {
+            throw new Error('Category modal not found');
+        }
+
         // Resetear estado cuando se cierra el modal
         categoryModal.addEventListener('hidden.bs.modal', function() {
             isEditing = false;
+            currentCategory = null; // Limpiar la categoría actual
         });
 
         // Configurar evento para nueva categoría
-        document.getElementById('addCategoryBtn').addEventListener('click', function() {
+        const addCategoryBtn = document.getElementById('addCategoryBtn');
+        if (!addCategoryBtn) {
+            throw new Error('Add category button not found');
+        }
+
+        addCategoryBtn.addEventListener('click', function() {
             // Resetear el formulario para nueva categoría
-            document.getElementById('categoryForm').reset();
+            const form = document.getElementById('categoryForm');
+            if (!form) {                showMessage('Error', 'Category form not found. Please refresh the page.', 'danger');
+                return;
+            }
+
+            form.reset();
             document.getElementById('categoryId').value = '';
             document.getElementById('categoryModalLabel').textContent = 'Add New Category';
-            document.getElementById('categoryForm').classList.remove('was-validated');
+            form.classList.remove('was-validated');
             isEditing = false;
+            currentCategory = null;
             
             // Mostrar el modal
             const modalInstance = bootstrap.Modal.getOrCreateInstance(categoryModal);
@@ -42,16 +47,11 @@ document.addEventListener('DOMContentLoaded', async function() {
 
         // Configurar evento para guardar
         const saveCategoryBtn = document.getElementById('saveCategoryBtn');
-        console.log('Save button element:', saveCategoryBtn);
-        if (saveCategoryBtn) {
-            saveCategoryBtn.addEventListener('click', saveCategory);
-            console.log('Save button click event attached');
-        } else {
-            console.error('Save button element not found');
+        if (!saveCategoryBtn) {
+            throw new Error('Save button not found');
         }
-    } catch (error) {
-        console.error('Error during initialization:', error);
-        showMessage('Error', 'Error initializing application. Please refresh the page.', 'danger');
+
+        saveCategoryBtn.addEventListener('click', saveCategory);    } catch (error) {        showMessage('Error', 'Error initializing application: ' + error.message, 'danger');
     }
 });
 
@@ -61,9 +61,7 @@ async function loadCategories() {
         if (data) {
             updateCategoriesTable(data);
         }
-    } catch (error) {
-        console.error('Error loading categories:', error);
-        showMessage('Error', 'Error loading categories. Please try again.', 'danger');
+    } catch (error) {        showMessage('Error', 'Error loading categories: ' + error.message, 'danger');
     }
 }
 
@@ -140,13 +138,12 @@ async function saveCategory(e) {
 
         const button = document.getElementById('saveCategoryBtn');
         button.disabled = true;
-        button.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Saving...';
-
-        const categoryId = document.getElementById('categoryId').value;
+        button.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Saving...';        const categoryId = document.getElementById('categoryId').value;
         const categoryData = {
             code: document.getElementById('categoryCode').value,
             name: document.getElementById('categoryName').value,
-            description: document.getElementById('categoryDescription').value || ''
+            description: document.getElementById('categoryDescription').value || '',
+            isActive: categoryId && currentCategory ? currentCategory.isActive : true // Mantener el estado actual o true para nuevas categorías
         };
 
         let response;
@@ -167,9 +164,7 @@ async function saveCategory(e) {
             // Recargar la tabla
             await loadCategories();
         }
-    } catch (error) {
-        console.error('Error saving category:', error);
-        showMessage('Error', 'Error saving category. Please try again.', 'danger');
+    } catch (error) {        showMessage('Error', 'Error saving category: ' + error.message, 'danger');
     } finally {
         isSaving = false;
         const button = document.getElementById('saveCategoryBtn');
@@ -182,8 +177,10 @@ async function editCategory(id) {
     try {
         isEditing = true;
         const category = await getApiData(`Categories/${id}`);
-        
-        if (category) {
+          if (category) {
+            // Guardar la categoría actual
+            currentCategory = category;
+            
             // Actualizar título del modal
             document.getElementById('categoryModalLabel').textContent = 'Edit Category';
             
@@ -200,9 +197,7 @@ async function editCategory(id) {
             const modalInstance = bootstrap.Modal.getOrCreateInstance(document.getElementById('categoryModal'));
             modalInstance.show();
         }
-    } catch (error) {
-        console.error('Error loading category:', error);
-        showMessage('Error', 'Error loading category. Please try again.', 'danger');
+    } catch (error) {        showMessage('Error', 'Error loading category: ' + error.message, 'danger');
     }
 }
 
@@ -242,9 +237,7 @@ async function toggleCategoryStatus(id, isActive) {
                 }
             }
         }
-    } catch (error) {
-        console.error('Error toggling category status:', error);
-        showMessage('Error', 'Error updating category status. Please try again.', 'danger');
+    } catch (error) {        showMessage('Error', 'Error updating category status: ' + error.message, 'danger');
     }
 }
 
@@ -277,9 +270,7 @@ async function deleteCategory(id, code) {
                 await loadCategories();
             }
         }
-    } catch (error) {
-        console.error('Error deleting category:', error);
-        showMessage('Error', 'Error deleting category. Please try again.', 'danger');
+    } catch (error) {        showMessage('Error', 'Error deleting category: ' + error.message, 'danger');
     }
 }
 

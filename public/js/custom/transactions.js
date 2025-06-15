@@ -115,7 +115,7 @@ document.addEventListener('DOMContentLoaded', function() {
 // Cargar cajas y productos
 async function loadBoxesAndProducts() {
     try {
-        console.log('Loading boxes and products from:', API_URL);
+
         
         // Cargar cajas
         const boxesResponse = await fetch(`${API_URL}boxes`);
@@ -123,7 +123,7 @@ async function loadBoxesAndProducts() {
             throw new Error(`HTTP error! status: ${boxesResponse.status}`);
         }
         const boxes = await boxesResponse.json();
-        console.log('Boxes data:', boxes);
+
         
         // Cargar transacciones para calcular la ocupación actual de las cajas
         const transactionsResponse = await fetch(`${API_URL}transactions`);
@@ -162,11 +162,11 @@ async function loadBoxesAndProducts() {
             throw new Error(`HTTP error! status: ${productsResponse.status}`);
         }
         const products = await productsResponse.json();
-        console.log('Products data:', products);
+
         
         // Filtrar solo productos activos
         const activeProducts = products.filter(product => product.isActive);
-        console.log('Active products:', activeProducts);
+
         
         populateSelect('productId', activeProducts, 'code', 'description');
     } catch (error) {

@@ -23,9 +23,7 @@ document.addEventListener('DOMContentLoaded', async function() {
                 saveBox();
             }
         });
-    } catch (error) {
-        console.error('Error during initialization:', error);
-        showMessage('Error', 'Error initializing application. Please refresh the page.');
+    } catch (error) {        showMessage('Error', 'Error initializing application: ' + error.message, 'danger');
     }
 });
 
@@ -35,9 +33,7 @@ async function loadBoxes() {
         if (data) {
             updateBoxesTable(data);
         }
-    } catch (error) {
-        console.error('Error loading boxes:', error);
-        showMessage('Error', 'Error loading boxes. Please try again.', 'danger');
+    } catch (error) {        showMessage('Error', 'Error loading boxes: ' + error.message, 'danger');
     }
 }
 
@@ -208,9 +204,7 @@ async function saveBox() {
         bootstrap.Modal.getInstance(document.getElementById('boxModal')).hide();
         await loadBoxes();
         showMessage('Success', boxData.id === 0 ? 'Box created successfully!' : 'Box updated successfully!', 'success');
-    } catch (error) {
-        console.error('Error saving box:', error);
-        showMessage('Error', 'Error saving box. Please try again.', 'danger');
+    } catch (error) {        showMessage('Error', 'Error saving box: ' + error.message, 'danger');
     } finally {
         // Siempre restablecer la bandera
         isSaving = false;
@@ -275,9 +269,7 @@ async function toggleBoxStatus(id, currentStatus) {
             confirmModal.addEventListener('hidden.bs.modal', function() {
                 document.body.removeChild(confirmModal);
             });
-        } catch (error) {
-            console.error('Error updating box status:', error);
-            showMessage('Error', 'Error updating box status. Please try again.', 'danger');
+        } catch (error) {            showMessage('Error', 'Error updating box status: ' + error.message, 'danger');
         }
     });
     
@@ -327,13 +319,17 @@ async function deleteBox(id, code) {
     document.getElementById('confirmDeleteBtn').addEventListener('click', async function() {
         try {
             modal.hide();
-            
-            const response = await fetch(`${API_URL}Boxes/${id}`, {
+              const response = await fetch(`${API_URL}Boxes/${id}`, {
                 method: 'DELETE'
             });
 
             if (!response.ok) {
-                throw new Error('Network response was not ok');
+                const errorData = await response.text();
+                if (response.status === 400) {
+                    throw new Error('This box cannot be deleted because it is currently in use.');
+                } else {
+                    throw new Error(errorData || 'Error deleting box');
+                }
             }
 
             await loadBoxes();
@@ -345,7 +341,7 @@ async function deleteBox(id, code) {
             });
         } catch (error) {
             console.error('Error deleting box:', error);
-            showMessage('Error', 'Error deleting box. Please try again.', 'danger');
+            showMessage('Error', error.message, 'danger');
         }
     });
     

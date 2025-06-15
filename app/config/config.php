@@ -1,6 +1,6 @@
 <?php
 // Database configuration
-define('API_URL', 'http://localhost:5012/api/');
+define('API_URL', 'https://stockavaibletest-api.onrender.com/api/');
 
 // Application configuration
 define('BASE_URL', 'http://localhost:8080/StockAvaibleTest');

@@ -5,7 +5,7 @@
  */
 async function getApiData(endpoint) {
     try {
-        console.log(`Fetching from: ${API_URL}${endpoint}`);
+
         
         const response = await fetch(`${API_URL}${endpoint}`, {
             method: 'GET',
@@ -23,11 +23,8 @@ async function getApiData(endpoint) {
 
         const data = await response.json();
         return data;
-    } catch (error) {
-        console.error('API Error:', error);
-        if (error.message.includes('Failed to fetch')) {
-            console.error('This error usually means the API is not running or is not accessible.');
-            console.error('Please verify that your API is running at:', API_URL);
+    } catch (error) {        if (error.message.includes('Failed to fetch')) {
+            throw new Error(`API is not accessible. Please verify that it is running at ${API_URL}`);
         }
         throw error;
     }
@@ -74,7 +71,7 @@ async function updateApiData(endpoint, id, data) {
     try {
         // Si el endpoint ya incluye el ID, lo usamos directamente
         const url = `${API_URL}${endpoint}`;
-        console.log('Updating data at:', url);
+
         
         const response = await fetch(url, {
             method: 'PUT',
@@ -137,9 +134,7 @@ function showMessage(title, message, type = 'info') {
         messageModalBody.textContent = message;
         const modal = new bootstrap.Modal(messageModal);
         modal.show();
-    } else {
-        console.error('Message modal elements not found');
-        alert(`${title}: ${message}`);
+    } else {        alert(`${title}: ${message}`);
     }
 }
 
