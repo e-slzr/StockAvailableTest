@@ -1,0 +1,37 @@
+/* Custom styles for Stock Management System */
+
+/* General styles */
+body {
+    background-color: #f8f9fa;
+}
+
+/* Table styles */
+.table-actions {
+    width: 150px;
+}
+
+/* Modal styles */
+.modal-header {
+    background-color: #f8f9fa;
+    border-bottom: 1px solid #dee2e6;
+}
+
+/* Button styles */
+.btn-action {
+    margin: 0 2px;
+}
+
+/* Status badge styles */
+.badge-active {
+    background-color: #28a745;
+}
+
+.badge-inactive {
+    background-color: #dc3545;
+}
+
+/* Card styles */
+.card {
+    margin-bottom: 20px;
+    box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+}
